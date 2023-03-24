@@ -1,0 +1,15 @@
+[package]
+name = "farbe"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "farbe"
+crate-type = ["staticlib", "cdylib", "lib"]
+
+[features]
+
+[dependencies]
+anyhow = "1.0.70"
+byteorder = "1.4.3"
+png = "0.17.7"
