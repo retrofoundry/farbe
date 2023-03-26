@@ -5,7 +5,6 @@ use farbe::image::n64::{ImageFormat, NativeImage, PNGImage};
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    #[arg(short, long)]
     input: String,
 
     #[arg(short, long)]
