@@ -1,6 +1,6 @@
-use std::io::{Read, Seek};
-use clap::{Parser, arg, command};
+use clap::{arg, command, Parser};
 use farbe::image::n64::{ImageFormat, NativeImage, PNGImage};
+use std::io::{Read, Seek};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -42,7 +42,7 @@ fn main() {
             return;
         }
     }
-    
+
     // set output in case one was not given, default: append .png or .format to the input name
     let output = args.output.unwrap_or_else(|| {
         let mut output = args.input.clone();
@@ -60,7 +60,13 @@ fn main() {
         let mut writer = std::io::BufWriter::new(output);
         image.as_native(&mut writer, args.format).unwrap();
     } else {
-        let image = NativeImage::read(&mut reader, args.format, args.width.unwrap(), args.height.unwrap()).unwrap();
+        let image = NativeImage::read(
+            &mut reader,
+            args.format,
+            args.width.unwrap(),
+            args.height.unwrap(),
+        )
+        .unwrap();
         let output = std::fs::File::create(output).unwrap();
         let mut writer = std::io::BufWriter::new(output);
         image.as_png(&mut writer).unwrap();

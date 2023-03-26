@@ -244,7 +244,7 @@ impl PNGImage {
             ImageFormat::CI8 => self.as_ci8(writer),
             ImageFormat::RGBA32 => self.as_rgba32(writer),
             ImageFormat::RGBA16 => self.as_rgba16(writer),
-        } 
+        }
     }
 
     pub fn as_rgba32<W: Write>(&self, writer: &mut W) -> Result<()> {
