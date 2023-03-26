@@ -8,7 +8,7 @@ This library currently supports the following:
 Add this to your Cargo.toml:
 ```toml
 [dependencies]
-farbe = { git = "https://github.com/retrofoundry/farbe" }
+farbe = "0.1.0"
 ```
 
 ## How to use

@@ -1,7 +1,12 @@
 [package]
 name = "farbe"
 version = "0.1.0"
+description = "A library for working with retro image formats"
+repository = "https://github.com/retrofoundry/farbe"
+keywords = ["image", "n64", "retro"]
+readme = "README.md"
 edition = "2021"
+license-file = "LICENSE"
 
 [lib]
 name = "farbe"
