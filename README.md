@@ -20,7 +20,7 @@ let bytes: &[u8] = include_bytes!("image.rgba32")
 let image = NativeImage::read(bytes, ImageFormat::RGBA32, 160, 160).unwrap();
 
 let mut output_file = std::fs::File::create("image.png").unwrap();
-image.write_png(&mut output_file).unwrap();
+image.as_png(&mut output_file).unwrap();
 
 // convert to n64 format
 let bytes: &[u8] = include_bytes!("image.png");
