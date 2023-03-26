@@ -1,14 +1,14 @@
-pub struct r5g5b5a1 {}
+pub struct R5G5B5A1 {}
 
-impl r5g5b5a1 {
+impl R5G5B5A1 {
     #[inline]
     pub fn from_rgba(r: u8, g: u8, b: u8, a: u8) -> u16 {
-        let r = (r >> 3) as u16;
-        let g = (g >> 3) as u16;
-        let b = (b >> 3) as u16;
-        let a = (a >> 7) as u16;
+        let r = (r / 8) as u16;
+        let g = (g / 8) as u16;
+        let b = (b / 8) as u16;
+        let a = (a / 255) as u16;
 
-        return (r << 11) | (g << 6) | (b << 1) | a;
+        return (r << 11) | (g << 6) | (b << 1) | a;   
     }
 
     #[inline]
@@ -22,9 +22,9 @@ impl r5g5b5a1 {
     }
 }
 
-pub struct intensity {}
+pub struct Intensity {}
 
-impl intensity {
+impl Intensity {
     #[inline]
     pub fn from_rgb(r: u8, g: u8, b: u8) -> u8 {
         // Seen on Stack Overflow: https://stackoverflow.com/questions/687261/converting-rgb-to-grayscale-intensity/689547#comment20506224_689547

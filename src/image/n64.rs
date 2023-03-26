@@ -1,4 +1,4 @@
-use crate::color::{intensity, r5g5b5a1};
+use crate::color::{Intensity, R5G5B5A1};
 use anyhow::Result;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use png::{BitDepth, ColorType};
@@ -64,7 +64,7 @@ impl NativeImage {
                 let mut cursor = std::io::Cursor::new(&self.data);
 
                 while let Ok(pixel) = cursor.read_u16::<BigEndian>() {
-                    data.append(&mut r5g5b5a1::to_rgba(pixel));
+                    data.append(&mut R5G5B5A1::to_rgba(pixel));
                 }
 
                 encoder.set_color(png::ColorType::Rgba);
@@ -255,7 +255,7 @@ impl PNGImage {
         }
 
         self.data.chunks_exact(4).for_each(|chunk| {
-            let pixel = r5g5b5a1::from_rgba(chunk[0], chunk[1], chunk[2], chunk[3]);
+            let pixel = R5G5B5A1::from_rgba(chunk[0], chunk[1], chunk[2], chunk[3]);
             writer.write_u16::<BigEndian>(pixel).unwrap();
         });
 
@@ -281,16 +281,16 @@ impl PNGImage {
             }
             (ColorType::Rgba, BitDepth::Eight) => {
                 self.data.chunks_exact(8).for_each(|chunk| {
-                    let i1 = intensity::from_rgb(chunk[0], chunk[1], chunk[2]);
-                    let i2 = intensity::from_rgb(chunk[0], chunk[1], chunk[2]);
+                    let i1 = Intensity::from_rgb(chunk[0], chunk[1], chunk[2]);
+                    let i2 = Intensity::from_rgb(chunk[0], chunk[1], chunk[2]);
                     let pixel = i1 | i2 >> 4;
                     writer.write_u8(pixel).unwrap();
                 });
             }
             (ColorType::Rgb, BitDepth::Eight) => {
                 self.data.chunks_exact(6).for_each(|chunk| {
-                    let i1 = intensity::from_rgb(chunk[0], chunk[1], chunk[2]);
-                    let i2 = intensity::from_rgb(chunk[3], chunk[4], chunk[5]);
+                    let i1 = Intensity::from_rgb(chunk[0], chunk[1], chunk[2]);
+                    let i2 = Intensity::from_rgb(chunk[3], chunk[4], chunk[5]);
                     let pixel = i1 | i2 >> 4;
                     writer.write_u8(pixel).unwrap();
                 });
@@ -324,13 +324,13 @@ impl PNGImage {
             }
             (ColorType::Rgba, BitDepth::Eight) => {
                 self.data.chunks_exact(4).for_each(|chunk| {
-                    let intensity = intensity::from_rgb(chunk[0], chunk[1], chunk[2]);
+                    let intensity = Intensity::from_rgb(chunk[0], chunk[1], chunk[2]);
                     writer.write_u8(intensity).unwrap();
                 });
             }
             (ColorType::Rgb, BitDepth::Eight) => {
                 self.data.chunks_exact(3).for_each(|chunk| {
-                    let intensity = intensity::from_rgb(chunk[0], chunk[1], chunk[2]);
+                    let intensity = Intensity::from_rgb(chunk[0], chunk[1], chunk[2]);
                     writer.write_u8(intensity).unwrap();
                 });
             }
