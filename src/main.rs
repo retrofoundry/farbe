@@ -11,9 +11,6 @@ struct Args {
     output: Option<String>,
 
     #[arg(short, long)]
-    export: bool,
-
-    #[arg(short, long)]
     format: ImageFormat,
 
     #[arg(long)]
@@ -41,7 +38,7 @@ fn main() {
     // do validations
     if !is_png {
         if args.width.is_none() || args.height.is_none() {
-            println!("Error: --export requires --width and --height to be set");
+            println!("Error: exporting to native format requires --width and --height to be set");
             return;
         }
     }
