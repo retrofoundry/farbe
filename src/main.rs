@@ -21,13 +21,6 @@ struct Args {
 
     #[arg(long)]
     height: Option<u32>,
-
-    // TODO: Handle these?
-    // #[arg(short, long)]
-    // line: Option<u32>,
-
-    // #[arg(short, long)]
-    // deinterleave: Option<bool>,
 }
 
 fn main() {
