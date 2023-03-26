@@ -18,4 +18,5 @@ crate-type = ["staticlib", "cdylib", "lib"]
 [dependencies]
 anyhow = "1.0.70"
 byteorder = "1.4.3"
+clap = { version = "4.1.13", features = ["derive"] }
 png = "0.17.7"

@@ -12,6 +12,17 @@ farbe = "0.1.0"
 ```
 
 ## How to use
+
+### As a cli
+```bash
+# convert to png (width and height are required in this case)
+farbe test.rgba32 -o output.png -f rgba32 --width 24 --height 24
+
+# convert to n64 format
+farbe test.png -o output.rgba32 -f rgba32
+```
+
+### As a library
 ```rust
 use farbe::image::n64::{ImageFormat, NativeImage, PNGImage};
 

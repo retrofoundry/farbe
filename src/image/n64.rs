@@ -1,10 +1,11 @@
 use crate::color::{Intensity, R5G5B5A1};
 use anyhow::Result;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use clap::ValueEnum;
 use png::{BitDepth, ColorType};
 use std::io::{Read, Write};
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, ValueEnum)]
 pub enum ImageFormat {
     I4,
     I8,
@@ -230,6 +231,20 @@ impl PNGImage {
             color_type: info.color_type,
             bit_depth: info.bit_depth,
         })
+    }
+
+    pub fn as_native<W: Write>(&self, writer: &mut W, format: ImageFormat) -> Result<()> {
+        match format {
+            ImageFormat::I4 => self.as_i4(writer),
+            ImageFormat::I8 => self.as_i8(writer),
+            ImageFormat::IA4 => self.as_ia4(writer),
+            ImageFormat::IA8 => self.as_ia8(writer),
+            ImageFormat::IA16 => self.as_ia16(writer),
+            ImageFormat::CI4 => self.as_ci4(writer),
+            ImageFormat::CI8 => self.as_ci8(writer),
+            ImageFormat::RGBA32 => self.as_rgba32(writer),
+            ImageFormat::RGBA16 => self.as_rgba16(writer),
+        }
     }
 
     pub fn as_rgba32<W: Write>(&self, writer: &mut W) -> Result<()> {

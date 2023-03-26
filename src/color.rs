@@ -8,7 +8,7 @@ impl R5G5B5A1 {
         let b = (b / 8) as u16;
         let a = (a / 255) as u16;
 
-        return (r << 11) | (g << 6) | (b << 1) | a;   
+        return (r << 11) | (g << 6) | (b << 1) | a;
     }
 
     #[inline]
