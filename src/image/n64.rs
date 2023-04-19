@@ -103,8 +103,14 @@ impl NativeImage {
                 for _y in 0..self.height {
                     for _x in (0..self.width).step_by(2) {
                         let byte = cursor.read_u8()?;
-                        data.append(&mut NativeImage::get_tlut_color(tlut_color_table.unwrap(), (byte >> 4) & 0x0F));
-                        data.append(&mut NativeImage::get_tlut_color(tlut_color_table.unwrap(), (byte >> 0) & 0x0F));
+                        data.append(&mut NativeImage::get_tlut_color(
+                            tlut_color_table.unwrap(),
+                            (byte >> 4) & 0x0F,
+                        ));
+                        data.append(&mut NativeImage::get_tlut_color(
+                            tlut_color_table.unwrap(),
+                            (byte >> 0) & 0x0F,
+                        ));
                     }
                 }
             }
@@ -114,7 +120,10 @@ impl NativeImage {
                 for _y in 0..self.height {
                     for _x in 0..self.width {
                         let byte = cursor.read_u8()?;
-                        data.append(&mut NativeImage::get_tlut_color(tlut_color_table.unwrap(), byte));
+                        data.append(&mut NativeImage::get_tlut_color(
+                            tlut_color_table.unwrap(),
+                            byte,
+                        ));
                     }
                 }
             }
@@ -559,14 +568,11 @@ impl PNGImage {
 }
 
 impl TLUT {
-    pub fn read<R: Read>(
-        mut reader: R,
-        size: ImageSize,
-    ) -> Result<Self> {
+    pub fn read<R: Read>(mut reader: R, size: ImageSize) -> Result<Self> {
         let mut data = Vec::new();
         reader.read_to_end(&mut data)?;
 
-        Ok(Self {size, data})
+        Ok(Self { size, data })
     }
 
     pub fn decode(&self) -> Result<Vec<u8>> {
