@@ -18,6 +18,25 @@ pub enum ImageFormat {
     RGBA32,
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, ValueEnum)]
+pub enum ImageSize {
+    S4B,
+    S8B,
+    S16B,
+    S32B,
+}
+
+impl ImageSize {
+    pub fn tlut_size_in_bytes(&self) -> usize {
+        match self {
+            ImageSize::S4B => 0x10,
+            ImageSize::S8B => 0x100,
+            ImageSize::S16B => 0x1000,
+            ImageSize::S32B => 0x10000,
+        }
+    }
+}
+
 pub struct NativeImage {
     pub format: ImageFormat,
     pub width: u32,
@@ -29,6 +48,11 @@ pub struct PNGImage {
     data: Vec<u8>,
     color_type: ColorType,
     bit_depth: BitDepth,
+}
+
+pub struct TLUT {
+    pub data: Vec<u8>,
+    pub size: ImageSize,
 }
 
 impl NativeImage {
@@ -531,5 +555,29 @@ impl PNGImage {
         }
 
         Ok(())
+    }
+}
+
+impl TLUT {
+    pub fn read<R: Read>(
+        mut reader: R,
+        size: ImageSize,
+    ) -> Result<Self> {
+        let mut data = Vec::new();
+        reader.read_to_end(&mut data)?;
+
+        Ok(Self {size, data})
+    }
+
+    pub fn decode(&self) -> Result<Vec<u8>> {
+        let mut decoded = Vec::new();
+        let mut cursor = std::io::Cursor::new(&self.data);
+
+        for _i in 0..(self.size.tlut_size_in_bytes()) {
+            let pixel = cursor.read_u16::<BigEndian>()?;
+            decoded.append(&mut R5G5B5A1::to_rgba(pixel));
+        }
+
+        Ok(decoded)
     }
 }
