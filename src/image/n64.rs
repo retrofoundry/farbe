@@ -109,7 +109,7 @@ impl NativeImage {
                         ));
                         data.append(&mut NativeImage::get_tlut_color(
                             tlut_color_table.unwrap(),
-                            (byte >> 0) & 0x0F,
+                            byte & 0x0F,
                         ));
                     }
                 }
@@ -149,7 +149,7 @@ impl NativeImage {
                 for y in 0..self.height {
                     for x in 0..self.width {
                         let index = (y * self.width + x) as usize;
-                        let byte = self.data[index as usize];
+                        let byte = self.data[index];
 
                         let grayscale = byte & 0xF0;
                         let alpha = (byte & 0x0F) << 4;
@@ -198,7 +198,7 @@ impl NativeImage {
     }
 
     fn get_tlut_color(tlut_table: &[u8], index: u8) -> Vec<u8> {
-        let r = tlut_table[((index * 4) + 0) as usize];
+        let r = tlut_table[(index * 4) as usize];
         let g = tlut_table[((index * 4) + 1) as usize];
         let b = tlut_table[((index * 4) + 2) as usize];
         let a = tlut_table[((index * 4) + 3) as usize];

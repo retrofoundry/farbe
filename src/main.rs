@@ -36,11 +36,9 @@ fn main() {
     reader.seek(std::io::SeekFrom::Start(0)).unwrap();
 
     // do validations
-    if !is_png {
-        if args.width.is_none() || args.height.is_none() {
-            println!("Error: exporting to native format requires --width and --height to be set");
-            return;
-        }
+    if !is_png && (args.width.is_none() || args.height.is_none()) {
+        println!("Error: exporting to native format requires --width and --height to be set");
+        return;
     }
 
     // set output in case one was not given, default: append .png or .format to the input name
