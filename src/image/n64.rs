@@ -49,69 +49,52 @@ impl NativeImage {
         })
     }
 
-    pub fn as_png<W: Write>(&self, writer: W) -> Result<()> {
-        let mut encoder = png::Encoder::new(writer, self.width, self.height);
+    pub fn decode(&self, tlut_color_table: Option<&[u8]>) -> Result<Vec<u8>> {
+        let mut data: Vec<u8> = Vec::new();
+        let mut cursor = std::io::Cursor::new(&self.data);
 
         match self.format {
             ImageFormat::RGBA32 => {
-                encoder.set_color(png::ColorType::Rgba);
-                encoder.set_depth(png::BitDepth::Eight);
-
-                let mut writer = encoder.write_header()?;
-                writer.write_image_data(&self.data)?;
+                for _y in 0..self.height {
+                    for _x in 0..self.width {
+                        let pixel = cursor.read_u32::<BigEndian>()?;
+                        data.push((pixel >> 24) as u8);
+                        data.push((pixel >> 16) as u8);
+                        data.push((pixel >> 8) as u8);
+                        data.push(pixel as u8);
+                    }
+                }
             }
             ImageFormat::RGBA16 => {
-                let mut data = Vec::new();
-                let mut cursor = std::io::Cursor::new(&self.data);
-
-                while let Ok(pixel) = cursor.read_u16::<BigEndian>() {
-                    data.append(&mut R5G5B5A1::to_rgba(pixel));
-                }
-
-                encoder.set_color(png::ColorType::Rgba);
-                encoder.set_depth(png::BitDepth::Eight);
-
-                let mut writer = encoder.write_header()?;
-                writer.write_image_data(&data)?;
-            }
-            ImageFormat::I4 => {
-                let mut data = Vec::new();
-
-                for y in 0..self.height {
-                    for x in (0..self.width).step_by(2) {
-                        let index = (y * self.width + x) / 2;
-                        let byte = self.data[index as usize];
-
-                        data.push(byte & 0xF0);
-                        data.push((byte & 0x0F) << 4);
+                for _y in 0..self.height {
+                    for _x in 0..self.width {
+                        let pixel = cursor.read_u16::<BigEndian>()?;
+                        data.append(&mut R5G5B5A1::to_rgba(pixel));
                     }
                 }
-
-                encoder.set_color(png::ColorType::Grayscale);
-                encoder.set_depth(png::BitDepth::Eight);
-
-                let mut writer = encoder.write_header()?;
-                writer.write_image_data(&data)?;
             }
-            ImageFormat::I8 => {
-                let mut data = Vec::new();
+            ImageFormat::CI4 => {
+                assert!(tlut_color_table.is_some());
 
-                for y in 0..self.height {
-                    for x in 0..self.width {
-                        let index = (y * self.width + x) as usize;
-                        data.push(self.data[index]);
+                for _y in 0..self.height {
+                    for _x in (0..self.width).step_by(2) {
+                        let byte = cursor.read_u8()?;
+                        data.append(&mut NativeImage::get_tlut_color(tlut_color_table.unwrap(), (byte >> 4) & 0x0F));
+                        data.append(&mut NativeImage::get_tlut_color(tlut_color_table.unwrap(), (byte >> 0) & 0x0F));
                     }
                 }
+            }
+            ImageFormat::CI8 => {
+                assert!(tlut_color_table.is_some());
 
-                encoder.set_color(png::ColorType::Grayscale);
-                encoder.set_depth(png::BitDepth::Eight);
-
-                let mut writer = encoder.write_header()?;
-                writer.write_image_data(&data)?;
+                for _y in 0..self.height {
+                    for _x in 0..self.width {
+                        let byte = cursor.read_u8()?;
+                        data.append(&mut NativeImage::get_tlut_color(tlut_color_table.unwrap(), byte));
+                    }
+                }
             }
             ImageFormat::IA4 => {
-                let mut data = Vec::new();
-
                 for y in 0..self.height {
                     for x in (0..self.width).step_by(2) {
                         let index = (y * self.width + x) / 2;
@@ -120,24 +103,16 @@ impl NativeImage {
                         let source = (byte & 0xF0) >> 4;
                         let grayscale = ((source & 0x0E) >> 1) * 32;
                         let alpha = (source & 0x01) * 255;
-                        data.append(&mut vec![grayscale, alpha]);
+                        data.append(&mut vec![grayscale, grayscale, grayscale, alpha]);
 
                         let source = byte & 0x0F;
                         let grayscale = ((source & 0x0E) >> 1) * 32;
                         let alpha = (source & 0x01) * 255;
-                        data.append(&mut vec![grayscale, alpha]);
+                        data.append(&mut vec![grayscale, grayscale, grayscale, alpha]);
                     }
                 }
-
-                encoder.set_color(png::ColorType::GrayscaleAlpha);
-                encoder.set_depth(png::BitDepth::Eight);
-
-                let mut writer = encoder.write_header()?;
-                writer.write_image_data(&data)?;
             }
             ImageFormat::IA8 => {
-                let mut data = Vec::new();
-
                 for y in 0..self.height {
                     for x in 0..self.width {
                         let index = (y * self.width + x) as usize;
@@ -146,25 +121,119 @@ impl NativeImage {
                         let grayscale = byte & 0xF0;
                         let alpha = (byte & 0x0F) << 4;
 
-                        data.append(&mut vec![grayscale, alpha])
+                        data.append(&mut vec![grayscale, grayscale, grayscale, alpha])
                     }
                 }
+            }
+            ImageFormat::IA16 => {
+                for _y in 0..self.height {
+                    for _x in 0..self.width {
+                        let grayscale = cursor.read_u8()?;
+                        let alpha = cursor.read_u8()?;
 
-                encoder.set_color(png::ColorType::GrayscaleAlpha);
+                        data.append(&mut vec![grayscale, grayscale, grayscale, alpha])
+                    }
+                }
+            }
+            ImageFormat::I4 => {
+                for y in 0..self.height {
+                    for x in (0..self.width).step_by(2) {
+                        let index = (y * self.width + x) / 2;
+                        let byte = self.data[index as usize];
+
+                        let grayscale1 = byte & 0xF0;
+                        let grayscale2 = (byte & 0x0F) << 4;
+
+                        data.append(&mut vec![grayscale1, grayscale1, grayscale1, grayscale1]);
+                        data.append(&mut vec![grayscale2, grayscale2, grayscale2, grayscale2]);
+                    }
+                }
+            }
+            ImageFormat::I8 => {
+                for y in 0..self.height {
+                    for x in 0..self.width {
+                        let index = (y * self.width + x) as usize;
+                        let grayscale = self.data[index];
+
+                        data.append(&mut vec![grayscale, grayscale, grayscale, grayscale]);
+                    }
+                }
+            }
+        }
+
+        Ok(data)
+    }
+
+    fn get_tlut_color(tlut_table: &[u8], index: u8) -> Vec<u8> {
+        let r = tlut_table[((index * 4) + 0) as usize];
+        let g = tlut_table[((index * 4) + 1) as usize];
+        let b = tlut_table[((index * 4) + 2) as usize];
+        let a = tlut_table[((index * 4) + 3) as usize];
+
+        vec![r, g, b, a]
+    }
+
+    pub fn as_png<W: Write>(&self, writer: &mut W) -> Result<()> {
+        let mut encoder = png::Encoder::new(writer, self.width, self.height);
+
+        match self.format {
+            ImageFormat::RGBA32 => {
+                let data = self.decode(None)?;
+
+                encoder.set_color(png::ColorType::Rgba);
+                encoder.set_depth(png::BitDepth::Eight);
+
+                let mut writer = encoder.write_header()?;
+                writer.write_image_data(&data)?;
+            }
+            ImageFormat::RGBA16 => {
+                let data = self.decode(None)?;
+
+                encoder.set_color(png::ColorType::Rgba);
+                encoder.set_depth(png::BitDepth::Eight);
+
+                let mut writer = encoder.write_header()?;
+                writer.write_image_data(&data)?;
+            }
+            ImageFormat::I4 => {
+                let data = self.decode(None)?;
+
+                encoder.set_color(png::ColorType::Rgba);
+                encoder.set_depth(png::BitDepth::Eight);
+
+                let mut writer = encoder.write_header()?;
+                writer.write_image_data(&data)?;
+            }
+            ImageFormat::I8 => {
+                let data = self.decode(None)?;
+
+                encoder.set_color(png::ColorType::Rgba);
+                encoder.set_depth(png::BitDepth::Eight);
+
+                let mut writer = encoder.write_header()?;
+                writer.write_image_data(&data)?;
+            }
+            ImageFormat::IA4 => {
+                let data = self.decode(None)?;
+
+                encoder.set_color(png::ColorType::Rgba);
+                encoder.set_depth(png::BitDepth::Eight);
+
+                let mut writer = encoder.write_header()?;
+                writer.write_image_data(&data)?;
+            }
+            ImageFormat::IA8 => {
+                let data = self.decode(None)?;
+
+                encoder.set_color(png::ColorType::Rgba);
                 encoder.set_depth(png::BitDepth::Eight);
                 let mut writer = encoder.write_header()?;
                 writer.write_image_data(&data)?;
             }
             ImageFormat::IA16 => {
-                let mut data = Vec::new();
+                let data = self.decode(None)?;
 
-                let mut cursor = std::io::Cursor::new(&self.data);
-                while let Ok(grayscale) = cursor.read_u8() {
-                    let alpha = cursor.read_u8()?;
-                    data.append(&mut vec![grayscale, alpha])
-                }
-
-                encoder.set_color(png::ColorType::GrayscaleAlpha);
+                encoder.set_color(png::ColorType::Rgba);
                 encoder.set_depth(png::BitDepth::Eight);
 
                 let mut writer = encoder.write_header()?;

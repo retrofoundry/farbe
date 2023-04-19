@@ -18,7 +18,7 @@ impl R5G5B5A1 {
         let b = ((pixel & 0x003E) >> 1) as u8;
         let a = (pixel & 0x01) as u8;
 
-        return vec![r * 8, g * 8, b * 8, a * 255];
+        vec![r * 8, g * 8, b * 8, a * 255]
     }
 }
 
