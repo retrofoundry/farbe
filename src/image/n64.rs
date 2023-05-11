@@ -206,7 +206,7 @@ impl NativeImage {
         vec![r, g, b, a]
     }
 
-    pub fn as_png<W: Write>(&self, writer: &mut W) -> Result<()> {
+    pub fn as_png<W: Write>(&self, tlut_color_table: Option<&[u8]>, writer: &mut W) -> Result<()> {
         let mut encoder = png::Encoder::new(writer, self.width, self.height);
 
         match self.format {
@@ -273,23 +273,9 @@ impl NativeImage {
                 writer.write_image_data(&data)?;
             }
             ImageFormat::CI4 => {
-                let mut data = Vec::new();
-                let palette: Vec<u8> = vec![2 ^ 8; 16 * 16];
+                assert!(tlut_color_table.is_some());
+                let data = self.decode(tlut_color_table)?;
 
-                for y in 0..self.height {
-                    for x in (0..self.width).step_by(2) {
-                        let index = (y * self.width + x) / 2;
-                        let byte = self.data[index as usize];
-
-                        let target_index = (byte & 0xF0) >> 4;
-                        data.push(target_index);
-
-                        let target_index = byte & 0x0F;
-                        data.push(target_index);
-                    }
-                }
-
-                encoder.set_palette(palette);
                 encoder.set_color(png::ColorType::Indexed);
                 encoder.set_depth(png::BitDepth::Eight);
 
@@ -297,17 +283,9 @@ impl NativeImage {
                 writer.write_image_data(&data)?;
             }
             ImageFormat::CI8 => {
-                let mut data = Vec::new();
-                let palette: Vec<u8> = vec![2 ^ 8; 16 * 16];
+                assert!(tlut_color_table.is_some());
+                let data = self.decode(tlut_color_table)?;
 
-                for y in 0..self.height {
-                    for x in 0..self.width {
-                        let index = (y * self.width + x) as usize;
-                        data.push(self.data[index]);
-                    }
-                }
-
-                encoder.set_palette(palette);
                 encoder.set_color(png::ColorType::Indexed);
                 encoder.set_depth(png::BitDepth::Eight);
 
